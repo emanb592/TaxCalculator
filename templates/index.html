@@ -5,7 +5,7 @@
   <title>Tax Calculator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Minimal styling -->
+
   <style>
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 2rem; }
     form { display: grid; gap: 0.75rem; max-width: 320px; }
@@ -15,7 +15,7 @@
     .error { margin-top: 1rem; }
   </style>
 
-  <!-- Axios CDN -->
+
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
@@ -32,66 +32,94 @@
       <input type="number" id="input-savings" step="any" required />
     </label>
 
+    <label>
+      Bonus income
+      <input type="number" id="input-bonus" step="any" required />
+    </label>
+
+
     <button type="button" onclick="calculate()">Preview</button>
 
   </form>
 
   <div id="feedbackempl"></div>
   <div id="feedbacksavings"></div>
+  <div id="feedbackbonus"></div>
+
 
    <script>
     let feedback1 = document.getElementById("feedbackempl");
     let feedback2= document.getElementById("feedbacksavings");
+    let feedback3 = document.getElementById("feedbackbonus");
+
+
+  
 
     function calculate() {
-      const a = document.getElementById('input-empl').value;
-      const b = document.getElementById('input-savings').value;
-      feedback1.textContent = feedback2.textContent = "";
+  const a = document.getElementById('input-empl').value;     // employment
+  const b = document.getElementById('input-savings').value;  // savings
+  const c = document.getElementById('input-bonus').value;    // bonus
 
-      axios.post("/api/calcTax", {a, b}).then( res => {
-        feedback1.className = feedback2.className = "result";
+  feedback1.textContent = feedback2.textContent = feedback3.textContent = "";
+  feedback1.className = feedback2.className = feedback3.className = "";
 
-        window.location.href = "/confirm";
+  
+  axios.post("/api/calcTax", { a, b, c })
+    .then(res => {
+      feedback1.className = feedback2.className = feedback3.className = "result";
 
-      }).
-      catch (err => displayError(err));
-    }
+     
+
+      feedback1.textContent = `Tax on employment: £${res.data.taxOnEmployment.value}`;
+      feedback2.textContent = `Tax on savings: £${res.data.taxOnSavings.value}`;
+      feedback3.textContent = `Tax on bonus: £${res.data.taxOnBonus.value}`;
+
+;
+    })
+    .catch(err => displayError(err));
+}
+
+
+
 
     function save() {
-      const a = document.getElementById('input-empl').value;
-      const b = document.getElementById('input-savings').value;
-      feedback1.textContent = feedback2.textContent = "";
-      
-      axios.post("/api/saveTax", {a, b}).then( res => {
-        feedback1.className = feedback2.className = "result";
-        feedback1.textContent = "Saved successfully";
-      }).
-      catch (err => displayError(err));
-    }
+  const a = document.getElementById('input-empl').value;
+  const b = document.getElementById('input-savings').value;
+  const c = document.getElementById('input-bonus').value;
+
+  feedback1.textContent = feedback2.textContent = feedback3.textContent = "";
+  feedback1.className = feedback2.className = feedback3.className = "";
+
+  axios.post("/api/saveTax", { a, b, c })
+    .then(res => {
+      feedback1.className = "result";
+      feedback1.textContent = "Saved successfully";
+    })
+    .catch(err => displayError(err));
+}
+
+
 
     function displayError(err) {
-      if (err.response.data.error1) {
-        //feedback1.className = "error";
-        feedback1.textContent = "Please provide your income";
-      }
-      else if (err.response.data.error2) {
-        //feedback1.className = "error";
-        feedback1.textContent = "Please provide positive income";
-      }
-      //else if (err.response.error3) {
-        //feedback2.className = "error";
-        //feedback2.textContent = "No tax is paid on saving interest less than £1000";
-      //}
-      else if (err.response.error4) {
-        feedback1.className = "error";
-        feedback1.textContent = "Both incomes must be numerical";
-      }
-      else if (err.response.error) {
-        feedback.className = "error";
-        feedback.textContent = "Error saving data";
-      }
-    }    
-    
+  feedback1.className = feedback2.className = feedback3.className = "error";
+
+  const d = err?.response?.data || {};
+
+  if (d.error1) {
+    feedback1.textContent = "Please provide your income";
+  } else if (d.error2) {
+    feedback1.textContent = "Please provide positive income";
+  } else if (d.error4) {
+    feedback1.textContent = "Both incomes must be numerical";
+  } else if (d.error) {
+    feedback1.textContent = "Error saving data";
+  } else {
+    feedback1.textContent = "Something went wrong";
+  }
+}
+
+
+
   </script>
 </body>
 </html>
